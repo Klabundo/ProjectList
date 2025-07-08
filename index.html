@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <title>Meine Projekte</title>
+  <title>Meine Projekte – Klabundo</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     body {
@@ -12,22 +12,80 @@
       padding: 2rem;
       color: #222;
     }
+    .profile-block {
+      display: flex;
+      align-items: center;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .profile-avatar {
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      border: 2px solid #0366d6;
+      margin-right: 1.5rem;
+      object-fit: cover;
+      background: #eaeaea;
+    }
+    .profile-info h2 {
+      margin: 0 0 0.5rem 0;
+      color: #0366d6;
+      font-size: 1.6rem;
+    }
+    .profile-info p {
+      margin: 0 0 0.7rem 0;
+      color: #444;
+      font-size: 1rem;
+    }
+    .profile-links a {
+      margin-right: 1rem;
+      color: #0366d6;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 1rem;
+    }
+    .profile-links a:hover {
+      text-decoration: underline;
+      color: #024b94;
+    }
+
     h1 {
       text-align: center;
       color: #0366d6;
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
     }
+    .subtitle {
+      text-align: center;
+      color: #666;
+      font-size: 1.1rem;
+      margin-bottom: 2rem;
+    }
+
     .projects {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
       gap: 1.5rem;
       margin-top: 2rem;
+      max-width: 1100px;
+      margin-left: auto;
+      margin-right: auto;
     }
     .project-card {
       background: #fff;
       border-radius: 10px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.06);
       padding: 1.5rem;
-      transition: transform 0.15s;
+      transition: transform 0.15s, box-shadow 0.15s;
+      display: flex;
+      flex-direction: column;
+      min-height: 220px;
     }
     .project-card:hover {
       transform: translateY(-4px) scale(1.03);
@@ -39,15 +97,18 @@
       color: #0366d6;
       margin-bottom: 0.5rem;
       text-decoration: none;
+      word-break: break-all;
     }
     .project-desc {
       font-size: 1rem;
       color: #444;
       margin-bottom: 0.8rem;
+      flex: 1;
     }
     .project-meta {
-      font-size: 0.9rem;
+      font-size: 0.93rem;
       color: #888;
+      margin-bottom: 0.5rem;
     }
     .project-link {
       display: inline-block;
@@ -57,50 +118,72 @@
       padding: 0.4rem 1rem;
       border-radius: 5px;
       text-decoration: none;
-      font-size: 0.95rem;
+      font-size: 0.96rem;
       transition: background 0.2s;
+      align-self: flex-start;
     }
     .project-link:hover {
       background: #024b94;
     }
+    @media (max-width: 600px) {
+      body { padding: 0.5rem; }
+      .profile-block { flex-direction: column; text-align: center; }
+      .profile-avatar { margin: 0 0 1rem 0; }
+      .projects { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
+  <div class="profile-block" id="profile"></div>
   <h1>🌟 Meine Projekte auf GitHub 🌟</h1>
+  <div class="subtitle">Automatisch aktualisierte Übersicht meiner öffentlichen Projekte</div>
   <div class="projects" id="projects"></div>
 
   <script>
-    const username = "Klabundo"; // <-- Hier deinen GitHub-Namen eintragen
+    const username = "Klabundo";
 
+    // --- Profile Block ---
+    fetch(`https://api.github.com/users/${username}`)
+      .then(response => response.json())
+      .then(user => {
+        const profileDiv = document.getElementById('profile');
+        profileDiv.innerHTML = `
+          <img class="profile-avatar" src="${user.avatar_url}" alt="${user.login}'s avatar">
+          <div class="profile-info">
+            <h2>${user.name ? user.name : user.login}</h2>
+            <p>${user.bio ? user.bio : "Kein Profiltext vorhanden."}</p>
+            <div class="profile-links">
+              <a href="${user.html_url}" target="_blank">GitHub</a>
+              ${user.blog ? `<a href="${user.blog.startsWith('http') ? user.blog : 'https://' + user.blog}" target="_blank">Website</a>` : ""}
+              ${user.email ? `<a href="mailto:${user.email}">Email</a>` : ""}
+            </div>
+          </div>
+        `;
+      })
+      .catch(error => {
+        document.getElementById('profile').innerText = "Fehler beim Laden des Profils.";
+        console.error(error);
+      });
+
+    // --- Projects List ---
     fetch(`https://api.github.com/users/${username}/repos?sort=updated`)
       .then(response => response.json())
       .then(repos => {
         const container = document.getElementById('projects');
+        if (!Array.isArray(repos)) {
+          container.innerText = "Fehler beim Laden der Projekte.";
+          return;
+        }
+        let shown = 0;
         repos.forEach(repo => {
-          // Optional: Nur öffentliche, relevante Repos anzeigen
-          if (repo.fork) return;
-
+          if (repo.fork) return; // Skip forks
+          shown++;
           const card = document.createElement('div');
           card.className = 'project-card';
-
           card.innerHTML = `
             <a class="project-title" href="${repo.html_url}" target="_blank">${repo.name}</a>
             <div class="project-desc">${repo.description ? repo.description : 'Keine Beschreibung vorhanden.'}</div>
             <div class="project-meta">
-              🌐 <a href="https://${username}.github.io/${repo.name}/" target="_blank">GitHub Page</a>
-              <br>
-              ⭐ ${repo.stargazers_count} | 🛠️ ${repo.language ? repo.language : 'n/a'}
-            </div>
-            <a class="project-link" href="${repo.html_url}" target="_blank">Zum Repository</a>
-          `;
-          container.appendChild(card);
-        });
-      })
-      .catch(error => {
-        document.getElementById('projects').innerText = "Fehler beim Laden der Projekte.";
-        console.error(error);
-      });
-  </script>
-</body>
-</html>
-
+              ${repo.homepage ? `🔗 <a href="${repo.homepage}" target="_blank">${repo.homepage.replace(/^https?:\/\//, '')}</a><br>` : ''}
+              🌐 <a href
+
