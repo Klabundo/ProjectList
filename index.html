@@ -1,13 +1,106 @@
-<ul id="repo-list"></ul>
-<script>
-  fetch('https://api.github.com/users/Klabundo/repos')
-    .then(response => response.json())
-    .then(repos => {
-      const list = document.getElementById('repo-list');
-      repos.forEach(repo => {
-        const item = document.createElement('li');
-        item.innerHTML = `<a href="${repo.html_url}" target="_blank">${repo.name}</a>: ${repo.description || ''}`;
-        list.appendChild(item);
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Meine Projekte</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f7f9fb;
+      margin: 0;
+      padding: 2rem;
+      color: #222;
+    }
+    h1 {
+      text-align: center;
+      color: #0366d6;
+    }
+    .projects {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+      margin-top: 2rem;
+    }
+    .project-card {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      padding: 1.5rem;
+      transition: transform 0.15s;
+    }
+    .project-card:hover {
+      transform: translateY(-4px) scale(1.03);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+    }
+    .project-title {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #0366d6;
+      margin-bottom: 0.5rem;
+      text-decoration: none;
+    }
+    .project-desc {
+      font-size: 1rem;
+      color: #444;
+      margin-bottom: 0.8rem;
+    }
+    .project-meta {
+      font-size: 0.9rem;
+      color: #888;
+    }
+    .project-link {
+      display: inline-block;
+      margin-top: 0.7rem;
+      color: #fff;
+      background: #0366d6;
+      padding: 0.4rem 1rem;
+      border-radius: 5px;
+      text-decoration: none;
+      font-size: 0.95rem;
+      transition: background 0.2s;
+    }
+    .project-link:hover {
+      background: #024b94;
+    }
+  </style>
+</head>
+<body>
+  <h1>🌟 Meine Projekte auf GitHub 🌟</h1>
+  <div class="projects" id="projects"></div>
+
+  <script>
+    const username = "Klabundo"; // <-- Hier deinen GitHub-Namen eintragen
+
+    fetch(`https://api.github.com/users/${username}/repos?sort=updated`)
+      .then(response => response.json())
+      .then(repos => {
+        const container = document.getElementById('projects');
+        repos.forEach(repo => {
+          // Optional: Nur öffentliche, relevante Repos anzeigen
+          if (repo.fork) return;
+
+          const card = document.createElement('div');
+          card.className = 'project-card';
+
+          card.innerHTML = `
+            <a class="project-title" href="${repo.html_url}" target="_blank">${repo.name}</a>
+            <div class="project-desc">${repo.description ? repo.description : 'Keine Beschreibung vorhanden.'}</div>
+            <div class="project-meta">
+              🌐 <a href="https://${username}.github.io/${repo.name}/" target="_blank">GitHub Page</a>
+              <br>
+              ⭐ ${repo.stargazers_count} | 🛠️ ${repo.language ? repo.language : 'n/a'}
+            </div>
+            <a class="project-link" href="${repo.html_url}" target="_blank">Zum Repository</a>
+          `;
+          container.appendChild(card);
+        });
+      })
+      .catch(error => {
+        document.getElementById('projects').innerText = "Fehler beim Laden der Projekte.";
+        console.error(error);
       });
-    });
-</script>
+  </script>
+</body>
+</html>
+
